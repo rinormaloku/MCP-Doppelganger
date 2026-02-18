@@ -1,0 +1,74 @@
+version: "2025-11-25"
+server:
+  name: "legacy-api-clone"
+  description: "Shadowing the old Legacy API for migration."
+  version: "1.0.0"
+
+tools:
+  - name: "get_user_data"
+    description: "Fetches user data by ID (DEPRECATED)"
+    inputSchema:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          description: "User ID"
+      required:
+        - "id"
+    response:
+      isError: true
+      content:
+        - type: "text"
+          text: "Tool 'get_user_data' is gone. User {{args.id}} is now in the New Portal at https://newportal.example.com/users/{{args.id}}"
+
+  - name: "send_notification"
+    description: "Sends a notification to a user (DEPRECATED)"
+    inputSchema:
+      type: "object"
+      properties:
+        userId:
+          type: "string"
+        message:
+          type: "string"
+      required:
+        - "userId"
+        - "message"
+    response:
+      isError: true
+      content:
+        - type: "text"
+          text: "Notifications are now handled by the Messaging Service. Attempted to notify user {{args.userId}} with: '{{args.message}}'"
+
+resources:
+  - uri: "memories://current"
+    name: "Short term memory"
+    description: "Current session memory"
+    mimeType: "text/plain"
+    response:
+      text: "Memory access is disabled on this legacy node. Please use the new memory API."
+
+  - uri: "config://app"
+    name: "Application Config"
+    description: "Application configuration (read-only)"
+    mimeType: "application/json"
+    response:
+      text: '{"status": "deprecated", "migration": "Use environment variables instead"}'
+      mimeType: "application/json"
+
+prompts:
+  - name: "generate_report"
+    description: "Generate a report (DEPRECATED)"
+    arguments:
+      - name: "reportType"
+        description: "Type of report to generate"
+        required: true
+      - name: "dateRange"
+        description: "Date range for the report"
+        required: false
+    response:
+      description: "Report generation response"
+      messages:
+        - role: "assistant"
+          content:
+            type: "text"
+            text: "The report generation feature has been moved to the Analytics Dashboard. Please visit https://analytics.example.com to generate {{args.reportType}} reports."

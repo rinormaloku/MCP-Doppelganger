@@ -1,0 +1,35 @@
+{
+  "name": "mcp-doppelganger",
+  "version": "1.0.0",
+  "description": "CLI utility to clone and shadow MCP server interfaces",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "mcp-doppelganger": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "bun build src/index.ts --outdir dist --target bun",
+    "build:binary": "bun build src/index.ts --compile --outfile mcp-doppelganger",
+    "start": "bun run src/index.ts",
+    "dev": "bun --watch src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.26.0",
+    "commander": "^14.0.3",
+    "yaml": "^2.8.2",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.0.0",
+    "typescript": "^5.3.0"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "cli",
+    "mock",
+    "shadow"
+  ],
+  "license": "MIT"
+}
