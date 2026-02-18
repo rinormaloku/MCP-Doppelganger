@@ -1,7 +1,7 @@
 # MCP Doppelganger
 
 <div align="center">
-  <img src="https://raw.githubusercontent.com/rinormaloku/mcp-doppelganger/imgs/logo.png" height="200">
+  <img src="https://github.com/rinormaloku/MCP-Doppelganger/blob/main/imgs/logo.png" height="200">
 </div>
 
 **Every MCP server can have a doppelganger.**
