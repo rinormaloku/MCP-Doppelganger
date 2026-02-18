@@ -4,7 +4,7 @@
   <img src="https://github.com/rinormaloku/MCP-Doppelganger/blob/main/imgs/logo.png" height="200">
 </div>
 
-**Every MCP server can have a doppelganger.**
+**Every MCP server has a doppelganger!**
 
 A doppelganger is a mock [Model Context Protocol](https://modelcontextprotocol.io/) server created from a simple config file. Use it to test AI agents, migrate away from a deprecated service, or simulate any MCP server locally. You can clone an existing server, modify the config to customize responses, and serve it, no coding or real backend required.
 
