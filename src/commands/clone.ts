@@ -1,6 +1,7 @@
+import { writeFile } from "node:fs/promises";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
-import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { stringify as stringifyYaml } from "yaml";
 import type { DoppelgangerConfig, Tool, Resource, ResourceTemplate, Prompt } from "../types/config.js";
 
@@ -8,6 +9,43 @@ export interface CloneOptions {
   transport: "stdio" | "http";
   output?: string;
   format?: "yaml" | "json";
+  headers?: string[];
+  response?: string;
+}
+
+/**
+ * Parse header strings in format "Name: Value" or "Name=Value"
+ */
+function parseHeaders(headerStrings: string[]): Record<string, string> {
+  const headers: Record<string, string> = {};
+
+  for (const header of headerStrings) {
+    // Support both "Name: Value" and "Name=Value" formats
+    const colonIndex = header.indexOf(":");
+    const equalsIndex = header.indexOf("=");
+
+    let separator: number;
+    if (colonIndex === -1 && equalsIndex === -1) {
+      console.error(`Warning: Invalid header format "${header}", skipping`);
+      continue;
+    } else if (colonIndex === -1) {
+      separator = equalsIndex;
+    } else if (equalsIndex === -1) {
+      separator = colonIndex;
+    } else {
+      // Use whichever comes first
+      separator = Math.min(colonIndex, equalsIndex);
+    }
+
+    const name = header.substring(0, separator).trim();
+    const value = header.substring(separator + 1).trim();
+
+    if (name && value) {
+      headers[name] = value;
+    }
+  }
+
+  return headers;
 }
 
 export async function cloneCommand(
@@ -27,10 +65,20 @@ export async function cloneCommand(
     }
   );
 
-  let transport: StdioClientTransport | SSEClientTransport;
+  let transport: StdioClientTransport | StreamableHTTPClientTransport;
 
   if (options.transport === "http") {
-    transport = new SSEClientTransport(new URL(target));
+    const customHeaders = options.headers ? parseHeaders(options.headers) : {};
+
+    if (Object.keys(customHeaders).length > 0) {
+      console.error(`Using custom headers: ${Object.keys(customHeaders).join(", ")}`);
+    }
+
+    transport = new StreamableHTTPClientTransport(new URL(target), {
+      requestInit: {
+        headers: customHeaders,
+      },
+    });
   } else {
     const args = target.split(" ");
     const command = args[0];
@@ -49,11 +97,11 @@ export async function cloneCommand(
     const serverInfo = client.getServerVersion();
     console.error(`Server: ${serverInfo?.name || "unknown"} v${serverInfo?.version || "unknown"}`);
 
-    const config = await extractServerSchema(client, serverInfo);
+    const config = await extractServerSchema(client, serverInfo, options.response);
     const output = formatOutput(config, options.format || "yaml");
 
     const outputFile = options.output || "doppelganger.yaml";
-    await Bun.write(outputFile, output);
+    await writeFile(outputFile, output, "utf-8");
     console.error(`\nConfiguration written to: ${outputFile}`);
 
     await client.close();
@@ -63,10 +111,14 @@ export async function cloneCommand(
   }
 }
 
+const DEFAULT_RESPONSE = "Text placeholder, change with the desired message. Or use --response to set the same response for all tools.";
+
 async function extractServerSchema(
   client: Client,
-  serverInfo: { name?: string; version?: string } | undefined
+  serverInfo: { name?: string; version?: string } | undefined,
+  customResponse?: string
 ): Promise<DoppelgangerConfig> {
+  const responseText = customResponse || DEFAULT_RESPONSE;
   const tools: Tool[] = [];
   const resources: Resource[] = [];
   const resourceTemplates: ResourceTemplate[] = [];
@@ -78,16 +130,22 @@ async function extractServerSchema(
     console.error(`Found ${toolsResult.tools.length} tools`);
 
     for (const tool of toolsResult.tools) {
+      // Remove required, $schema, and additionalProperties from inputSchema
+      const inputSchema = { ...(tool.inputSchema as Record<string, unknown>) };
+      delete inputSchema.required;
+      delete inputSchema.$schema;
+      delete inputSchema.additionalProperties;
+
       tools.push({
         name: tool.name,
         description: tool.description,
-        inputSchema: tool.inputSchema as Record<string, unknown>,
+        inputSchema,
         response: {
           isError: true,
           content: [
             {
               type: "text",
-              text: `Tool '${tool.name}' has been decommissioned. Please use the new API.`,
+              text: responseText,
             },
           ],
         },
@@ -109,7 +167,7 @@ async function extractServerSchema(
         description: resource.description,
         mimeType: resource.mimeType,
         response: {
-          text: `Resource '${resource.name}' is no longer available.`,
+          text: responseText,
           mimeType: resource.mimeType || "text/plain",
         },
       });
@@ -130,7 +188,7 @@ async function extractServerSchema(
         description: template.description,
         mimeType: template.mimeType,
         response: {
-          text: `Resource template '${template.name}' is no longer available.`,
+          text: responseText,
           mimeType: template.mimeType || "text/plain",
         },
       });
@@ -148,10 +206,10 @@ async function extractServerSchema(
       prompts.push({
         name: prompt.name,
         description: prompt.description,
+        // All arguments are optional - no required field
         arguments: prompt.arguments?.map((arg) => ({
           name: arg.name,
           description: arg.description,
-          required: arg.required || false,
         })) || [],
         response: {
           description: prompt.description,
@@ -160,7 +218,7 @@ async function extractServerSchema(
               role: "assistant",
               content: {
                 type: "text",
-                text: `Prompt '${prompt.name}' has been decommissioned.`,
+                text: responseText,
               },
             },
           ],

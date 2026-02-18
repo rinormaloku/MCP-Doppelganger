@@ -61,7 +61,8 @@ export const ResourceTemplateSchema = z.object({
 export const PromptArgumentSchema = z.object({
   name: z.string(),
   description: z.string().optional(),
-  required: z.boolean().optional().default(false),
+  // Note: 'required' field is intentionally omitted - all arguments are treated as optional
+  // to ensure tool calls always succeed and return responses
 });
 
 export const PromptMessageSchema = z.object({

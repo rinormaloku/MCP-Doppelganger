@@ -1,6 +1,8 @@
+import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import { randomUUID } from "node:crypto";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { z } from "zod";
 import type { DoppelgangerConfig, ContentBlock } from "../types/config.js";
 import { loadConfig } from "../utils/config-loader.js";
@@ -171,9 +173,8 @@ function createMcpServer(config: DoppelgangerConfig): McpServer {
       if (arg.description) {
         zodType = zodType.describe(arg.description);
       }
-      if (!arg.required) {
-        zodType = zodType.optional();
-      }
+      // All arguments are optional to ensure prompts always succeed
+      zodType = zodType.optional();
       argsSchema[arg.name] = zodType;
     }
 
@@ -263,49 +264,51 @@ async function startHttpServer(
 ): Promise<void> {
   console.error(`Starting HTTP/SSE transport on port ${port}...`);
 
-  const transports = new Map<string, WebStandardStreamableHTTPServerTransport>();
+  const transports = new Map<string, StreamableHTTPServerTransport>();
 
-  Bun.serve({
-    port,
-    async fetch(req) {
-      const url = new URL(req.url);
+  const httpServer = createServer(async (req: IncomingMessage, res: ServerResponse) => {
+    const url = new URL(req.url || "/", `http://localhost:${port}`);
 
-      // Handle MCP endpoint
-      if (url.pathname === "/mcp" || url.pathname === "/sse") {
-        const sessionId = req.headers.get("mcp-session-id");
+    // Health check
+    if (url.pathname === "/health") {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "ok", server: config.server.name }));
+      return;
+    }
 
-        // Check for existing session
-        if (sessionId && transports.has(sessionId)) {
-          const transport = transports.get(sessionId)!;
-          return transport.handleRequest(req);
-        }
+    // Handle MCP endpoint
+    if (url.pathname === "/mcp" || url.pathname === "/sse") {
+      const sessionId = req.headers["mcp-session-id"] as string | undefined;
 
-        // Create new transport for new sessions
-        const transport = new WebStandardStreamableHTTPServerTransport({
-          sessionIdGenerator: () => crypto.randomUUID(),
-          onsessioninitialized: (id) => {
-            transports.set(id, transport);
-          },
-          onsessionclosed: (id) => {
-            transports.delete(id);
-          },
-        });
-
-        await server.connect(transport);
-        return transport.handleRequest(req);
+      // Check for existing session
+      if (sessionId && transports.has(sessionId)) {
+        const transport = transports.get(sessionId)!;
+        await transport.handleRequest(req, res);
+        return;
       }
 
-      // Health check
-      if (url.pathname === "/health") {
-        return new Response(JSON.stringify({ status: "ok", server: config.server.name }), {
-          headers: { "Content-Type": "application/json" },
-        });
-      }
+      // Create new transport for new sessions
+      const transport = new StreamableHTTPServerTransport({
+        sessionIdGenerator: () => randomUUID(),
+        onsessioninitialized: (id: string) => {
+          transports.set(id, transport);
+        },
+        onsessionclosed: (id: string) => {
+          transports.delete(id);
+        },
+      });
 
-      return new Response("Not Found", { status: 404 });
-    },
+      await server.connect(transport);
+      await transport.handleRequest(req, res);
+      return;
+    }
+
+    res.writeHead(404);
+    res.end("Not Found");
   });
 
-  console.error(`${config.server.name} is running on http://localhost:${port}`);
-  console.error(`MCP endpoint: http://localhost:${port}/mcp`);
+  httpServer.listen(port, () => {
+    console.error(`${config.server.name} is running on http://localhost:${port}`);
+    console.error(`MCP endpoint: http://localhost:${port}/mcp`);
+  });
 }

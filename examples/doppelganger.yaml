@@ -13,8 +13,7 @@ tools:
         id:
           type: "string"
           description: "User ID"
-      required:
-        - "id"
+
     response:
       isError: true
       content:
@@ -30,9 +29,6 @@ tools:
           type: "string"
         message:
           type: "string"
-      required:
-        - "userId"
-        - "message"
     response:
       isError: true
       content:
@@ -61,10 +57,8 @@ prompts:
     arguments:
       - name: "reportType"
         description: "Type of report to generate"
-        required: true
       - name: "dateRange"
         description: "Date range for the report"
-        required: false
     response:
       description: "Report generation response"
       messages:

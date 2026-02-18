@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import { parse as parseYaml } from "yaml";
 import { DoppelgangerConfigSchema, type DoppelgangerConfig } from "../types/config.js";
 
@@ -35,14 +37,11 @@ async function fetchRemoteConfig(url: string): Promise<string> {
 }
 
 async function loadLocalConfig(filePath: string): Promise<string> {
-  const file = Bun.file(filePath);
-  const exists = await file.exists();
-
-  if (!exists) {
+  if (!existsSync(filePath)) {
     throw new Error(`Config file not found: ${filePath}`);
   }
 
-  return file.text();
+  return readFile(filePath, "utf-8");
 }
 
 function parseConfigContent(

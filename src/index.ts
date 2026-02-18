@@ -10,6 +10,11 @@ program
   .description("Clone and shadow MCP server interfaces")
   .version("1.0.0");
 
+// Collect multiple --header options into an array
+function collectHeaders(value: string, previous: string[]): string[] {
+  return previous.concat([value]);
+}
+
 // Clone command
 program
   .command("clone <target>")
@@ -17,12 +22,16 @@ program
   .option("-t, --transport <type>", "Transport type (stdio or http)", "stdio")
   .option("-o, --output <file>", "Output file path", "doppelganger.yaml")
   .option("-f, --format <format>", "Output format (yaml or json)", "yaml")
+  .option("-H, --header <header>", "HTTP header (can be repeated, e.g., -H \"Authorization: Bearer $TOKEN\")", collectHeaders, [])
+  .option("-r, --response <text>", "Default response text for all tools, resources, and prompts")
   .action(async (target: string, options) => {
     try {
       await cloneCommand(target, {
         transport: options.transport as "stdio" | "http",
         output: options.output,
         format: options.format as "yaml" | "json",
+        headers: options.header,
+        response: options.response,
       });
     } catch (error) {
       console.error("Clone failed:", error instanceof Error ? error.message : String(error));
