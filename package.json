@@ -1,6 +1,6 @@
 {
   "name": "mcp-doppelganger",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "CLI utility to clone and shadow MCP server interfaces",
   "type": "module",
   "main": "dist/index.js",

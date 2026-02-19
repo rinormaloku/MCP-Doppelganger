@@ -6,39 +6,29 @@
 
 **Every MCP server has a doppelganger!**
 
-A doppelganger is a mock [Model Context Protocol](https://modelcontextprotocol.io/) server created from a simple config file. Use it to test AI agents, migrate away from a deprecated service, or simulate any MCP server locally. You can clone an existing server, modify the config to customize responses, and serve it, no coding or real backend required.
-
----
+A doppelganger is a mock [MCP](https://modelcontextprotocol.io/) server created from a simple config file. Use it to test AI agents, migrate away from a deprecated service, or simulate any MCP server locally. You can clone an existing server, modify the config to customize responses, and serve it.
 
 ## Quick Start
 
-Start a mock MCP server using the [example config](examples/doppelganger.yaml) included in this repo:
+Start a mock MCP server using the [`doppelganger.yaml`](doppelganger.yaml) config included in this repo:
 
 ```bash
-npx -y mcp-doppelganger serve --stdio -f https://raw.githubusercontent.com/rinor/mcp-doppelganger/main/examples/doppelganger.yaml
+npx -y mcp-doppelganger serve -f https://raw.githubusercontent.com/rinormaloku/mcp-doppelganger/main/doppelganger.yaml
 ```
 
 That's it. Test it immediately with [MCP Inspector](https://github.com/modelcontextprotocol/inspector):
 
 ```bash
 # List all tools
-npx -y @modelcontextprotocol/inspector --cli \
-  --transport stdio \
-  'npx -y mcp-doppelganger serve --stdio -f https://raw.githubusercontent.com/rinor/mcp-doppelganger/main/examples/doppelganger.yaml' \
-  --method "tools/list"
+npx -y @modelcontextprotocol/inspector \
+  --cli "http://localhost:3000/mcp" --transport http --method tools/list
 
 # Call a tool
-npx -y @modelcontextprotocol/inspector --cli \
-  --transport stdio \
-  'npx -y mcp-doppelganger serve --stdio -f https://raw.githubusercontent.com/rinor/mcp-doppelganger/main/examples/doppelganger.yaml' \
-  --method "tools/call" \
-  --tool-name "get_user_data" \
-  --tool-arg "id=user-42"
+npx -y @modelcontextprotocol/inspector \
+  --cli "http://localhost:3000/mcp" --transport http --method tools/call  --tool-name "hello_user" --tool-arg "username=user-42"
 ```
 
-The server responds with whatever you defined in the config — no real backend required.
-
----
+The server responds with whatever you defined in the config. No real backend required.
 
 ## Clone an Existing MCP Server
 
@@ -63,16 +53,15 @@ npx -y mcp-doppelganger clone "npx -y @modelcontextprotocol/server-everything" \
 Edit the generated file to customize responses, then serve it:
 
 ```bash
-npx -y mcp-doppelganger serve --stdio -f doppelganger.yaml
+npx -y mcp-doppelganger serve -f doppelganger.yaml
 ```
 
----
 
 ## Configuration Reference
 
 ### Full example
 
-See [examples/doppelganger.yaml](examples/doppelganger.yaml) for a complete config file you can use as a starting point.
+See [examples/complete.yaml](examples/complete.yaml) for a complete config file you can use as a starting point.
 
 ```yaml
 version: "2025-11-25"
@@ -95,7 +84,7 @@ tools:
       isError: true
       content:
         - type: "text"
-          text: "Notifications moved to the new Messaging Service. Tried to notify {{args.userId}}: '{{args.message}}'"
+          text: "Notifications tool moved to the new Messaging MCP. CANNOT notify {{args.userId}}: '{{args.message}}'"
 
 resources:
   - uri: "config://app"
@@ -116,18 +105,8 @@ prompts:
         - role: "assistant"
           content:
             type: "text"
-            text: "Reports moved to https://analytics.example.com. Requested: {{args.reportType}}"
+            text: "Reports moved to https://analytics.example.com."
 ```
-
-### Template variables
-
-Use `{{args.paramName}}` anywhere in a response to include the value sent by the caller:
-
-```yaml
-text: "Hello {{args.name}}, your account ID is {{args.id}}"
-```
-
-> **Note:** All parameters are treated as optional. This ensures the server always returns a response instead of failing with a validation error.
 
 ### Transport options
 
@@ -142,8 +121,6 @@ npx -y mcp-doppelganger serve --http -p 3000 -f doppelganger.yaml
 npx -y mcp-doppelganger serve --stdio --http -f doppelganger.yaml
 ```
 
----
-
 ## Docker
 
 ```bash
@@ -157,7 +134,31 @@ docker run -v $(pwd):/config mcp-doppelganger serve -f /config/doppelganger.yaml
 docker run mcp-doppelganger serve -f https://example.com/doppelganger.yaml
 ```
 
----
+## CLI Command Reference
+
+### `mcp-doppelganger clone`
+
+Connects to a live MCP server and "studies" its schema to generate a configuration file.
+
+| Option | Shorthand | Description | Default |
+| --- | --- | --- | --- |
+| `--transport` | `-t` | Transport type: `stdio` or `http` | `stdio` |
+| `--output` | `-o` | Output file path | `doppelganger.yaml` |
+| `--format` | `-f` | Output format: `yaml` or `json` | `yaml` |
+| `--header` | `-H` | HTTP headers (repeatable for multiple) | `[]` |
+| `--response` | `-r` | Default response text for all captured entities | `None` |
+
+### `mcp-doppelganger serve`
+
+Starts the doppelganger server to host your mock interface.
+
+| Option | Shorthand | Description | Default |
+| --- | --- | --- | --- |
+| `--file` | `-f` | Path or URL to your configuration file | `doppelganger.yaml` |
+| `--stdio` |  | Enable `stdio` transport (for local agent use) | `false` |
+| `--http` |  | Enable HTTP transport (for browser/remote use) | `false` |
+| `--port` | `-p` | Port used when HTTP transport is enabled | `3000` |
+
 
 ## Development
 

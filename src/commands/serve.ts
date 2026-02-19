@@ -1,5 +1,4 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
-import { randomUUID } from "node:crypto";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
@@ -23,17 +22,16 @@ export async function serveCommand(options: ServeOptions): Promise<void> {
   console.error(`Server: ${config.server.name}`);
   console.error(`Tools: ${config.tools.length}, Resources: ${config.resources.length}, Prompts: ${config.prompts.length}`);
 
-  const server = createMcpServer(config);
-
   // Default to stdio if nothing specified
   const useHttp = options.http || (!options.stdio);
   const useStdio = options.stdio || false;
 
   if (useHttp) {
-    await startHttpServer(server, config, options.port || 3000);
+    await startHttpServer(config, options.port || 3000);
   }
 
   if (useStdio) {
+    const server = createMcpServer(config);
     await startStdioServer(server, config);
   }
 }
@@ -258,14 +256,14 @@ async function startStdioServer(server: McpServer, config: DoppelgangerConfig): 
 }
 
 async function startHttpServer(
-  server: McpServer,
   config: DoppelgangerConfig,
   port: number
 ): Promise<void> {
   console.error(`Starting HTTP/SSE transport on port ${port}...`);
 
-  const transports = new Map<string, StreamableHTTPServerTransport>();
-
+  // Operate in stateless mode: the MCP spec says servers MAY assign a session ID,
+  // so omitting it is fully compliant. Each request gets a fresh server+transport
+  // instance with no shared state, which is ideal for a doppelganger server.
   const httpServer = createServer(async (req: IncomingMessage, res: ServerResponse) => {
     const url = new URL(req.url || "/", `http://localhost:${port}`);
 
@@ -276,26 +274,11 @@ async function startHttpServer(
       return;
     }
 
-    // Handle MCP endpoint
+    // Handle MCP endpoint — stateless: no session tracking, new instance per request
     if (url.pathname === "/mcp" || url.pathname === "/sse") {
-      const sessionId = req.headers["mcp-session-id"] as string | undefined;
-
-      // Check for existing session
-      if (sessionId && transports.has(sessionId)) {
-        const transport = transports.get(sessionId)!;
-        await transport.handleRequest(req, res);
-        return;
-      }
-
-      // Create new transport for new sessions
+      const server = createMcpServer(config);
       const transport = new StreamableHTTPServerTransport({
-        sessionIdGenerator: () => randomUUID(),
-        onsessioninitialized: (id: string) => {
-          transports.set(id, transport);
-        },
-        onsessionclosed: (id: string) => {
-          transports.delete(id);
-        },
+        sessionIdGenerator: undefined, // stateless: no MCP-Session-Id header issued
       });
 
       await server.connect(transport);

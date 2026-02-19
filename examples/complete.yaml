@@ -18,10 +18,10 @@ tools:
       isError: true
       content:
         - type: "text"
-          text: "Tool 'get_user_data' is gone. User {{args.id}} is now in the New Portal at https://newportal.example.com/users/{{args.id}}"
+          text: "Tool 'get_user_data' is gone. Fetch the user data in https://newportal.example.com/users/{{args.id}}"
 
   - name: "send_notification"
-    description: "Sends a notification to a user (DEPRECATED)"
+    description: "Sends a notification (DEPRECATED)"
     inputSchema:
       type: "object"
       properties:
@@ -33,7 +33,7 @@ tools:
       isError: true
       content:
         - type: "text"
-          text: "Notifications are now handled by the Messaging Service. Attempted to notify user {{args.userId}} with: '{{args.message}}'"
+          text: "Notifications tool moved to the new Messaging MCP. CANNOT notify {{args.userId}}: '{{args.message}}'"
 
 resources:
   - uri: "memories://current"
@@ -65,4 +65,4 @@ prompts:
         - role: "assistant"
           content:
             type: "text"
-            text: "The report generation feature has been moved to the Analytics Dashboard. Please visit https://analytics.example.com to generate {{args.reportType}} reports."
+            text: "The report generation feature has been moved to the Analytics Dashboard MCP. Please visit https://analytics.example.com for instructions on how to install the new MCP."
