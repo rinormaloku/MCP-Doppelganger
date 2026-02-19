@@ -265,7 +265,7 @@ async function startHttpServer(
   // so omitting it is fully compliant. Each request gets a fresh server+transport
   // instance with no shared state, which is ideal for a doppelganger server.
   const httpServer = createServer(async (req: IncomingMessage, res: ServerResponse) => {
-    const url = new URL(req.url || "/", `http://localhost:${port}`);
+    const url = new URL(req.url || "/", `http://0.0.0.0:${port}`);
 
     // Health check
     if (url.pathname === "/health") {
@@ -291,7 +291,7 @@ async function startHttpServer(
   });
 
   httpServer.listen(port, () => {
-    console.error(`${config.server.name} is running on http://localhost:${port}`);
-    console.error(`MCP endpoint: http://localhost:${port}/mcp`);
+    console.error(`${config.server.name} is running on http://0.0.0.0:${port}`);
+    console.error(`MCP endpoint: http://0.0.0.0:${port}/mcp`);
   });
 }
