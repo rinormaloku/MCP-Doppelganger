@@ -34,7 +34,7 @@ jobs:
   build-binaries:
     name: Binary (${{ matrix.asset_name }})
     runs-on: ubuntu-latest
-    needs: build-and-test
+    needs: build
 
     strategy:
       matrix:
@@ -86,7 +86,7 @@ jobs:
   publish-npm:
     name: Publish to npm
     runs-on: ubuntu-latest
-    needs: build-and-test
+    needs: build
 
     steps:
       - name: Checkout
