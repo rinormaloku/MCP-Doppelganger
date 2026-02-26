@@ -44,10 +44,14 @@
     "deprecation",
     "api"
   ],
-  "author": "",
+  "author": "Rinor Maloku <rinormaloku37@gmail.com>",
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "https://github.com/rinormaloku/MCP-Doppelganger"
+  },
+  "homepage": "https://github.com/rinormaloku/MCP-Doppelganger",
+  "bugs": {
+    "url": "https://github.com/rinormaloku/MCP-Doppelganger/issues"
   },
   "license": "MIT",
   "engines": {
