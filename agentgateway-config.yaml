@@ -1,0 +1,21 @@
+binds:
+- port: 3000
+  listeners:
+  - routes:
+    - policies:
+        cors:
+          allowOrigins:
+          - "*"
+          allowHeaders:
+          - mcp-protocol-version
+          - content-type
+          - cache-control
+          exposeHeaders:
+          - "Mcp-Session-Id"
+      backends:
+      - mcp:
+          targets:
+          - name: mcp-server-replacement
+            stdio:
+              cmd: npx
+              args: ["-y", "mcp-doppelganger@0.2.0", "serve", "--stdio", "-f", "https://raw.githubusercontent.com/rinormaloku/mcp-doppelganger/main/examples/complete.yaml"]

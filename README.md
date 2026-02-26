@@ -2,6 +2,13 @@
 
 <div align="center">
   <img src="https://github.com/rinormaloku/MCP-Doppelganger/blob/main/imgs/logo.png" height="200">
+
+
+[![CI][ci-image]][ci-url]
+[![Code Coverage][code-coverage-image]][code-coverage-url]
+[![NPM Version][npm-version-image]][npm-url]
+[![NPM Downloads][npm-downloads-image]][npm-url]
+[![NPM License][npm-license-image]][npm-url]
 </div>
 
 **Every MCP server has a doppelganger!**
@@ -55,7 +62,6 @@ Edit the generated file to customize responses, then serve it:
 ```bash
 npx -y mcp-doppelganger serve -f doppelganger.yaml
 ```
-
 
 ## Configuration Reference
 
@@ -121,16 +127,23 @@ npx -y mcp-doppelganger serve --http -p 3000 -f doppelganger.yaml
 npx -y mcp-doppelganger serve --stdio --http -f doppelganger.yaml
 ```
 
+## Example use case: Deprecating an MCP Server with a Proxy
+
+A use case that inspired this package was to deprecate an existing MCP server and to inform AI agents using it about the deprecation and direct them to the new server or alternative solutions.
+
+With this package all you need to do is clone the old server, customize deprecation messages per tool, and serve the doppelganger behind an MCP proxy. Clients keep hitting the same endpoint — the AI agents get clear instructions on where to migrate.
+
+See the full walkthrough (including validation commands) in [docs/deprecating-with-proxy.md](docs/deprecating-with-proxy.md).
+
 ## Docker
 
 ```bash
-# Build
 docker build -t mcp-doppelganger .
 
-# Run with a local config file
+# Mount a local config file
 docker run -v $(pwd):/config mcp-doppelganger serve -f /config/doppelganger.yaml
 
-# Run with a remote config file
+# Pull config from a URL
 docker run mcp-doppelganger serve -f https://example.com/doppelganger.yaml
 ```
 
@@ -181,3 +194,6 @@ bun run build
 ## License
 
 MIT
+
+[npm-version-image]: https://img.shields.io/npm/v/mcp-doppelganger
+[npm-downloads-image]: https://img.shields.io/npm/dw/mcp-doppelganger
