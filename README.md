@@ -3,12 +3,8 @@
 <div align="center">
   <img src="https://github.com/rinormaloku/MCP-Doppelganger/blob/main/imgs/logo.png" height="200">
 
-
-[![CI][ci-image]][ci-url]
-[![Code Coverage][code-coverage-image]][code-coverage-url]
 [![NPM Version][npm-version-image]][npm-url]
 [![NPM Downloads][npm-downloads-image]][npm-url]
-[![NPM License][npm-license-image]][npm-url]
 </div>
 
 **Every MCP server has a doppelganger!**
@@ -195,5 +191,7 @@ bun run build
 
 MIT
 
+<!-- Badges -->
 [npm-version-image]: https://img.shields.io/npm/v/mcp-doppelganger
 [npm-downloads-image]: https://img.shields.io/npm/dw/mcp-doppelganger
+[npm-url]: https://www.npmjs.com/package/mcp-doppelganger
