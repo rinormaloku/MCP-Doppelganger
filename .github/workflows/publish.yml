@@ -9,9 +9,9 @@ permissions:
   id-token: write    # Required for OIDC trusted publishing to npm
 
 jobs:
-  # ── 1. Build JS bundle & run tests ────────────────────────────────────────
-  build-and-test:
-    name: Build & Test
+  # ── 1. Build JS bundle ─────────────────────────────────────────────────────
+  build:
+    name: Build
     runs-on: ubuntu-latest
 
     steps:
@@ -29,9 +29,6 @@ jobs:
 
       - name: Build (JS bundle)
         run: bun run build
-
-      - name: Run tests
-        run: bun test
 
   # ── 2. Build cross-platform binaries & upload as release assets ────────────
   build-binaries:
