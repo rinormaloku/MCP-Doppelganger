@@ -233,6 +233,7 @@ function buildAppModule(config: DoppelgangerConfig, transportTypes: McpTransport
       McpModule.forRoot({
         name: config.server.name,
         version: config.server.version || "1.0.0",
+        instructions: config.server.instructions,
         transport: transportTypes,
         streamableHttp: {
           // Stateless: no session tracking, ideal for a doppelganger server
@@ -251,8 +252,12 @@ function buildAppModule(config: DoppelgangerConfig, transportTypes: McpTransport
 }
 
 export async function serveCommand(options: ServeOptions): Promise<void> {
-  const configSource = options.file || "doppelganger.yaml";
-  console.error(`Loading configuration from: ${configSource}`);
+  // No -f and piped stdin: read the config from stdin (stdio needs stdin for the protocol)
+  const configSource = options.file ?? (!options.stdio && !process.stdin.isTTY ? "-" : "doppelganger.yaml");
+  if (configSource === "-" && options.stdio) {
+    throw new Error("Config from stdin cannot be combined with --stdio (stdio uses stdin for MCP). Use --http or -f <path>.");
+  }
+  console.error(`Loading configuration from: ${configSource === "-" ? "stdin" : configSource}`);
 
   const config = await loadConfig(configSource);
   console.error(`Server: ${config.server.name}`);

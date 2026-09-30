@@ -41,9 +41,9 @@ program
 
 // Serve command
 program
-  .command("serve")
-  .description("Start a doppelganger MCP server")
-  .option("-f, --file <path>", "Configuration file path or URL", "doppelganger.yaml")
+  .command("serve", { isDefault: true })
+  .description("Start a doppelganger MCP server (default command)")
+  .option("-f, --file <path>", "Configuration file path, URL, or - for stdin (default: stdin when piped, else doppelganger.yaml)")
   .option("--stdio", "Enable stdio transport")
   .option("--http", "Enable HTTP transport")
   .option("-p, --port <number>", "HTTP port", "3000")
@@ -60,15 +60,5 @@ program
       process.exit(1);
     }
   });
-
-// Default command (serve with defaults)
-program.action(async () => {
-  try {
-    await serveCommand({});
-  } catch (error) {
-    console.error("Serve failed:", error instanceof Error ? error.message : String(error));
-    process.exit(1);
-  }
-});
 
 program.parse();

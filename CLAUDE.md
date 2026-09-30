@@ -90,6 +90,7 @@ version: "2025-11-25"
 server:
   name: "server-name"
   description: "optional description"
+  instructions: "optional; returned as instructions in initialize"
   version: "1.0.0"
 
 tools:
@@ -166,7 +167,7 @@ docker run -v $(pwd)/config:/config mcp-doppelganger serve -f /config/doppelgang
 - **Clone format**: YAML (use `-f json` for JSON)
 - **Clone transport**: stdio (use `-t http` for HTTP)
 - **Clone response**: Placeholder text (use `-r/--response` to customize)
-- **Serve config**: `doppelganger.yaml` (use `-f` to change)
+- **Serve config**: stdin when piped (not with `--stdio`), else `doppelganger.yaml` (use `-f`, or `-f -` for stdin)
 - **Serve transport**: HTTP on port 3000 (use `--stdio` for stdio only)
 - **Serve port**: 3000 (use `-p` to change)
 - **Serve idle timeout**: 255 seconds (maximum allowed by Bun)

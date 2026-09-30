@@ -17,7 +17,8 @@
     "prepublishOnly": "bun run build",
     "start": "bun run src/index.ts",
     "dev": "bun --watch src/index.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",

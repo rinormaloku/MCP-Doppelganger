@@ -4,12 +4,14 @@ import { parse as parseYaml } from "yaml";
 import { DoppelgangerConfigSchema, type DoppelgangerConfig } from "../types/config.js";
 
 /**
- * Loads and validates a doppelganger configuration from a file path or URL
+ * Loads and validates a doppelganger configuration from a file path, URL, or "-" (stdin)
  */
 export async function loadConfig(source: string): Promise<DoppelgangerConfig> {
   let content: string;
 
-  if (isUrl(source)) {
+  if (source === "-") {
+    content = await readStdin();
+  } else if (isUrl(source)) {
     content = await fetchRemoteConfig(source);
   } else {
     content = await loadLocalConfig(source);
@@ -34,6 +36,20 @@ async function fetchRemoteConfig(url: string): Promise<string> {
   }
 
   return response.text();
+}
+
+async function readStdin(): Promise<string> {
+  const chunks: Buffer[] = [];
+  for await (const chunk of process.stdin) {
+    chunks.push(Buffer.from(chunk));
+  }
+  const content = Buffer.concat(chunks).toString("utf-8");
+
+  if (!content.trim()) {
+    throw new Error("No config on stdin: pipe a YAML/JSON config in, or pass -f <path|url>");
+  }
+
+  return content;
 }
 
 async function loadLocalConfig(filePath: string): Promise<string> {
