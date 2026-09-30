@@ -71,6 +71,7 @@ server:
   name: "my-fake-server"
   description: "Description shown to the AI agent"
   version: "1.0.0"
+  instructions: "Returned as `instructions` in the MCP initialize result (optional)"
 
 tools:
   - name: "send_notification"
@@ -113,15 +114,40 @@ prompts:
 ### Transport options
 
 ```bash
-# stdio (default) — for use with AI agents and MCP clients
-npx -y mcp-doppelganger serve --stdio -f doppelganger.yaml
-
-# HTTP — for browser or REST-based access
+# HTTP (default) — for browser or REST-based access, endpoint http://localhost:3000/mcp
 npx -y mcp-doppelganger serve --http -p 3000 -f doppelganger.yaml
+
+# stdio — for use with AI agents and MCP clients
+npx -y mcp-doppelganger serve --stdio -f doppelganger.yaml
 
 # Both at the same time
 npx -y mcp-doppelganger serve --stdio --http -f doppelganger.yaml
 ```
+
+### Config from stdin
+
+With no `-f` and a piped stdin, the config is read from stdin (`-f -` does the same explicitly), and `serve` is the default command. That gives one-command mock servers without fixture files, e.g. two servers for a repro:
+
+```bash
+npx -y mcp-doppelganger --http -p 3301 <<'EOF' &
+server: {name: public, version: "1.0.0", instructions: "public instr"}
+tools:
+  - name: echo
+    description: echo
+    response: {content: [{type: text, text: hi}]}
+EOF
+npx -y mcp-doppelganger --http -p 3302 <<'EOF' &
+server: {name: internal, version: "1.0.0", instructions: "internal secret instr"}
+tools:
+  - name: echo
+    description: echo
+    response: {content: [{type: text, text: hi}]}
+EOF
+```
+
+The stdio transport uses stdin for the MCP protocol, so a stdin config cannot be combined with `--stdio`: it serves HTTP, and `--stdio` with `-f -` is an error. `--stdio` without `-f` still reads `doppelganger.yaml`.
+
+Stop them with `kill %1 %2`: killing the PID from `$!` stops only the `npx` wrapper and leaves the server running.
 
 ## Example use case: Deprecating an MCP Server with a Proxy
 
@@ -159,11 +185,11 @@ Connects to a live MCP server and "studies" its schema to generate a configurati
 
 ### `mcp-doppelganger serve`
 
-Starts the doppelganger server to host your mock interface.
+Starts the doppelganger server to host your mock interface. `serve` is the default command, so `mcp-doppelganger --http -p 3000` works too.
 
 | Option | Shorthand | Description | Default |
 | --- | --- | --- | --- |
-| `--file` | `-f` | Path or URL to your configuration file | `doppelganger.yaml` |
+| `--file` | `-f` | Path or URL to your configuration file, or `-` for stdin | stdin when piped, else `doppelganger.yaml` |
 | `--stdio` |  | Enable `stdio` transport (for local agent use) | `false` |
 | `--http` |  | Enable HTTP transport (for browser/remote use) | `false` |
 | `--port` | `-p` | Port used when HTTP transport is enabled | `3000` |

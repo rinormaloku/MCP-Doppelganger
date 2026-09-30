@@ -3,6 +3,8 @@ server:
   name: "legacy-api-clone"
   description: "Shadowing the old Legacy API for migration."
   version: "1.0.0"
+  # Returned as `instructions` in the MCP initialize result
+  instructions: "This server is deprecated. Migrate to https://newportal.example.com."
 
 tools:
   - name: "get_user_data"

@@ -86,6 +86,7 @@ export const ServerConfigSchema = z.object({
   name: z.string(),
   description: z.string().optional(),
   version: z.string().optional().default("1.0.0"),
+  instructions: z.string().optional(),
 });
 
 export const DoppelgangerConfigSchema = z.object({
